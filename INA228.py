@@ -10,12 +10,13 @@
 
 import time
 
-from smbus2 import SMBus
+# from smbus2 import SMBus
+from machine import Pin, I2C
 
 # INA228 Address
 INA228_PORT = 1
 INA228_ADDRESS = 0x45
-INA228_SHUNT_OHMS = 0.025
+INA228_SHUNT_OHMS = 0.015
 INA228_SHUNT_TEMPCO_VALUE = 0
 
 #############################################################
@@ -199,7 +200,8 @@ class INA228:
     def __init__(self, busnum = INA228_PORT, address = INA228_ADDRESS, shunt_ohms = INA228_SHUNT_OHMS):
 
         self._address = address
-        self._i2c = SMBus(busnum)
+        # self._i2c = SMBus(busnum)
+        self._i2c = I2C(0, scl=Pin(17), sda=Pin(16))
         self._shunt_ohms = shunt_ohms
     
     def __convert2comp2float(self, twocompdata, nrofbit, factor):
@@ -229,7 +231,8 @@ class INA228:
 
     def read_register40(self, register):
 
-        result = self._i2c.read_i2c_block_data(self._address, register, 5)
+        # result = self._i2c.read_i2c_block_data(self._address, register, 5)
+        result = self._i2c.readfrom_mem(self._address, register, 5)
         
         register_value = ((result[0] << 32) & 0xFF00000000) | ((result[1] << 24) & 0xFF000000) | ((result[2] << 16) & 0xFF0000) | ((result[3] << 8) & 0xFF00) | (result[4] & 0xFF)
 
@@ -240,7 +243,8 @@ class INA228:
 
     def read_register24(self, register):
 
-        result = self._i2c.read_i2c_block_data(self._address, register, 3)
+        # result = self._i2c.read_i2c_block_data(self._address, register, 3)
+        result = self._i2c.readfrom_mem(self._address, register, 3)
         
         register_value = ((result[0] << 16) & 0xFF0000) | ((result[1] << 8) & 0xFF00) | (result[2] & 0xFF)
 
@@ -251,7 +255,8 @@ class INA228:
 
     def read_register16(self, register):
 
-        result = self._i2c.read_i2c_block_data(self._address, register, 2)
+        # result = self._i2c.read_i2c_block_data(self._address, register, 2)
+        result = self._i2c.readfrom_mem(self._address, register, 2)
         
         register_value = ((result[0] << 8) & 0xFF00) | (result[1] & 0xFF)
 
@@ -266,7 +271,8 @@ class INA228:
 
         #print("Write register 16 bits 0x%02X: 0x%02X 0b%s" % (register, register_value, self.__binary_as_string(register_value)))
 
-        self._i2c.write_i2c_block_data(self._address, register, register_bytes)
+        # self._i2c.write_i2c_block_data(self._address, register, register_bytes)
+        result = self._i2c.writeto_mem(self._address, register, register_bytes)
 
         # self._i2c.write_word_data(self._address, register, register_value)
 

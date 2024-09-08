@@ -1,7 +1,7 @@
-import api
-from datetime import datetime
+import INA228
+import time
 
-ina228 = api.INA228()
+ina228 = INA228.INA228()
 
 ina228.configure()
 
@@ -18,7 +18,7 @@ while True:
     if i < 1000:
 
         i = i +1
-        print(i, datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3])
+        print(i, time.ticks_ms())
 
     else:
 
