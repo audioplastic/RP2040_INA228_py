@@ -1,7 +1,7 @@
 import INA228
 import time
 
-ina228 = INA228.INA228()
+ina228 = INA228.INA228(address = 0x40, shunt_ohms = 0.015)
 
 ina228.configure()
 
@@ -22,4 +22,4 @@ while True:
 
     else:
 
-        exit()
+        break

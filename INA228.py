@@ -15,7 +15,7 @@ from machine import Pin, I2C
 
 # INA228 Address
 INA228_PORT = 1
-INA228_ADDRESS = 0x45
+INA228_ADDRESS = 0x40
 INA228_SHUNT_OHMS = 0.015
 INA228_SHUNT_TEMPCO_VALUE = 0
 
@@ -272,7 +272,7 @@ class INA228:
         #print("Write register 16 bits 0x%02X: 0x%02X 0b%s" % (register, register_value, self.__binary_as_string(register_value)))
 
         # self._i2c.write_i2c_block_data(self._address, register, register_bytes)
-        result = self._i2c.writeto_mem(self._address, register, register_bytes)
+        result = self._i2c.writeto_mem(self._address, register, bytearray([register_value]) )
 
         # self._i2c.write_word_data(self._address, register, register_value)
 
