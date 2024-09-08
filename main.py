@@ -1,7 +1,7 @@
 import INA228
 import time
 
-ina228 = INA228.INA228(address = 0x40, shunt_ohms = 0.015)
+ina228 = INA228.INA228(busnum=0, address = 0x40, shunt_ohms = 0.015)
 
 ina228.configure()
 
@@ -15,7 +15,7 @@ while True:
 
     ina228.get_power()
 
-    if i < 1000:
+    if i < 0:
 
         i = i +1
         print(i, time.ticks_ms())

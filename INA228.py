@@ -14,7 +14,7 @@ import time
 from machine import Pin, I2C
 
 # INA228 Address
-INA228_PORT = 1
+INA228_PORT = 0
 INA228_ADDRESS = 0x40
 INA228_SHUNT_OHMS = 0.015
 INA228_SHUNT_TEMPCO_VALUE = 0
@@ -201,7 +201,7 @@ class INA228:
 
         self._address = address
         # self._i2c = SMBus(busnum)
-        self._i2c = I2C(0, scl=Pin(17), sda=Pin(16))
+        self._i2c = I2C(busnum, scl=Pin(17), sda=Pin(16))
         self._shunt_ohms = shunt_ohms
     
     def __convert2comp2float(self, twocompdata, nrofbit, factor):
@@ -269,10 +269,14 @@ class INA228:
 
         register_bytes = self.__to_bytes(register_value)
 
-        #print("Write register 16 bits 0x%02X: 0x%02X 0b%s" % (register, register_value, self.__binary_as_string(register_value)))
+        # print("Write register 16 bits 0x%02X: 0x%02X 0b%s" % (register, register_value, self.__binary_as_string(register_value)))
 
         # self._i2c.write_i2c_block_data(self._address, register, register_bytes)
-        result = self._i2c.writeto_mem(self._address, register, bytearray([register_value]) )
+        result = self._i2c.writeto_mem(self._address, register, bytearray(register_bytes) )
+
+        # Something screwy here as more than 16 bits are comin into reg value
+        # print("reg 0x%02X  --  val 0x%X" % (register, register_value) )
+        # self._i2c.writeto_mem(self._address, register, bytearray(register_bytes) )
 
         # self._i2c.write_word_data(self._address, register, register_value)
 
@@ -284,7 +288,7 @@ class INA228:
         else:
             temp = 40.96e-3
 
-        current_lsb = (temp / INA228_SHUNT_OHMS) / 524288
+        current_lsb = (temp / self._shunt_ohms) / 524288
 
         return current_lsb
 
@@ -345,7 +349,7 @@ class INA228:
     
     def shunt_calib(self):
 
-        calib_value = int(13107.2e6 * self.get_current_lsb() * INA228_SHUNT_OHMS)
+        calib_value = int(13107.2e6 * self.get_current_lsb() * self._shunt_ohms)
 
         self.write_register16(self.__INA228_SHUNT_CAL, calib_value)
 
@@ -360,7 +364,7 @@ class INA228:
         self.reset_all()
 
         self.set_config()
-        self.set_adc_config()
+        # self.set_adc_config()
 
         self.shunt_calib()
         self.shunt_tempco()
@@ -518,13 +522,13 @@ class INA228:
 
         if (value >= 0):
 
-            data = (value * INA228_SHUNT_OHMS) / self.get_shunt_conv_factor()
+            data = (value * self._shunt_ohms) / self.get_shunt_conv_factor()
 
         else:
 
             value_temp = value * (-1);
 
-            data = (value_temp * INA228_SHUNT_OHMS) / self.get_shunt_conv_factor()
+            data = (value_temp * self._shunt_ohms) / self.get_shunt_conv_factor()
             data = ~data
             data = data + 1
 
@@ -537,13 +541,13 @@ class INA228:
 
         if (value >= 0):
 
-            data = (value * INA228_SHUNT_OHMS) / self.get_shunt_conv_factor()
+            data = (value * self._shunt_ohms) / self.get_shunt_conv_factor()
 
         else:
 
             value_temp = value * (-1);
 
-            data = (value_temp * INA228_SHUNT_OHMS) / self.get_shunt_conv_factor()
+            data = (value_temp * self._shunt_ohms) / self.get_shunt_conv_factor()
             data = ~data
             data = data + 1
 
