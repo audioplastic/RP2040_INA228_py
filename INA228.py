@@ -6,10 +6,6 @@
 #   1) Value of VSHUHT is needed to multiply to 10 that get correct value
 #
 ##############################################################
-
-
-import time
-
 # from smbus2 import SMBus
 from machine import Pin, I2C
 
@@ -136,7 +132,6 @@ INA228_VSHCT_CONV_TIME_NBIT = 0x06
 INA228_VTCT_CONV_TIME = 0x05
 INA228_VTCT_CONV_TIME_NBIT = 0x03
 
-
 #############################################################
 # INA228 ADC sample averaging count. 
 #
@@ -152,7 +147,6 @@ INA228_VTCT_CONV_TIME_NBIT = 0x03
 #############################################################
 INA228_ADC_AVG = 3
 INA228_AVG_NBIT = 0
-
 
 #############################################################
 # INA228 ADC alerts signal
@@ -173,9 +167,7 @@ INA228_ALERT_SLOWALERT = 13
 INA228_ALERT_CNVR = 14
 INA228_ALERT_ALATCH = 15
 
-
 class INA228:
-
     __INA228_CONFIG         = 0x00
     __INA228_ADC_CONFIG     = 0x01
     __INA228_SHUNT_CAL      = 0x02
@@ -198,17 +190,14 @@ class INA228:
     __INA228_DEVICE_ID          = 0x3F
 
     def __init__(self, busnum = INA228_PORT, address = INA228_ADDRESS, shunt_ohms = INA228_SHUNT_OHMS):
-
         self._address = address
         # self._i2c = SMBus(busnum)
         self._i2c = I2C(busnum, scl=Pin(17), sda=Pin(16))
         self._shunt_ohms = shunt_ohms
     
     def __convert2comp2float(self, twocompdata, nrofbit, factor):
-
         isnegative = 1
         isnegative = (isnegative << (nrofbit - 1))
-
         dietemp = twocompdata
 
         if(dietemp > isnegative):
@@ -218,59 +207,39 @@ class INA228:
 
         return dietemp
 
-
     def __binary_as_string(self, register_value):
-
         return bin(register_value)[2:].zfill(16)
 
-
     def __to_bytes(self, register_value):
-
         return [(register_value >> 8) & 0xFF, register_value & 0xFF]
 
-
     def read_register40(self, register):
-
         # result = self._i2c.read_i2c_block_data(self._address, register, 5)
         result = self._i2c.readfrom_mem(self._address, register, 5)
-        
         register_value = ((result[0] << 32) & 0xFF00000000) | ((result[1] << 24) & 0xFF000000) | ((result[2] << 16) & 0xFF0000) | ((result[3] << 8) & 0xFF00) | (result[4] & 0xFF)
-
         #print("Read register 16 bits - 0x%02X: 0x%05X = 0b%s" %(register, register_value, self.__binary_as_string(register_value)))
 
         return register_value
 
-
     def read_register24(self, register):
-
         # result = self._i2c.read_i2c_block_data(self._address, register, 3)
         result = self._i2c.readfrom_mem(self._address, register, 3)
-        
         register_value = ((result[0] << 16) & 0xFF0000) | ((result[1] << 8) & 0xFF00) | (result[2] & 0xFF)
-
         #print("Read register 24 bits - 0x%02X: 0x%05X = 0b%s" %(register, register_value, self.__binary_as_string(register_value)))
 
         return register_value
 
-
     def read_register16(self, register):
-
         # result = self._i2c.read_i2c_block_data(self._address, register, 2)
         result = self._i2c.readfrom_mem(self._address, register, 2)
-        
         register_value = ((result[0] << 8) & 0xFF00) | (result[1] & 0xFF)
-
         #print("Read register 16 bits - 0x%02X: 0x%04X = 0b%s" %(register, register_value, self.__binary_as_string(register_value)))
 
         return register_value
 
-    
     def write_register16(self, register, register_value):
-
         register_bytes = self.__to_bytes(register_value)
-
         # print("Write register 16 bits 0x%02X: 0x%02X 0b%s" % (register, register_value, self.__binary_as_string(register_value)))
-
         # self._i2c.write_i2c_block_data(self._address, register, register_bytes)
         result = self._i2c.writeto_mem(self._address, register, bytearray(register_bytes) )
 
@@ -280,9 +249,7 @@ class INA228:
 
         # self._i2c.write_word_data(self._address, register, register_value)
 
-    
     def get_current_lsb(self):
-
         if(INA228_ADCRANGE == 0):
             temp = 163.84e-3
         else:
@@ -292,9 +259,7 @@ class INA228:
 
         return current_lsb
 
-
     def get_shunt_conv_factor(self):
-
         if(INA228_ADCRANGE == 0):
             shunt_conv_factor = 1.25e-6
         else:
@@ -302,154 +267,88 @@ class INA228:
 
         return shunt_conv_factor
 
-
     def reset_all(self):
-
         config = self.read_register16(self.__INA228_CONFIG)
-
         data = 1 << INA228_RST_NBIT
-
         config = config | data
-
         self.write_register16(self.__INA228_CONFIG, config)
 
-    
     def reset_energy(self):
-
         config = self.read_register16(self.__INA228_CONFIG)
-
         data = 1 << INA228_RSTACC_NBIT
-
         config = config | data
-
         self.write_register16(self.__INA228_CONFIG, config)
-
 
     def set_config(self):
-
         # Write settings to CONFIG register
-
         config = self.read_register16(self. __INA228_CONFIG)
-
         config = config | (INA228_CONVERSION_DELAY << INA228_CONVDLY_NBIT) | (INA228_TEMP_COMP << INA228_TEMPCOMP_NBIT) | (INA228_ADCRANGE << INA228_ADCRANGE_NBIT)
-
         self.write_register16(self.__INA228_CONFIG, config)
 
-
     def set_adc_config(self):
-
         # Write settings to ADC CONFIG register
-
         config = self.read_register16(self. __INA228_ADC_CONFIG)
-
         config = config | (INA228_ADC_MODE << INA228_ADC_MODE_NBIT) | (INA228_VBUS_CONV_TIME << INA228_VBUS_CONV_TIME_NBIT ) | (INA228_VSHCT_CONV_TIME << INA228_VSHCT_CONV_TIME_NBIT) | (INA228_VTCT_CONV_TIME << INA228_VTCT_CONV_TIME_NBIT) | (INA228_ADC_AVG << INA228_AVG_NBIT)
-
         self.write_register16(self.__INA228_ADC_CONFIG, config)
 
-    
     def shunt_calib(self):
-
         calib_value = int(13107.2e6 * self.get_current_lsb() * self._shunt_ohms)
-
         self.write_register16(self.__INA228_SHUNT_CAL, calib_value)
-
-    
+ 
     def shunt_tempco(self):
-
         self.write_register16(self.__INA228_SHUNT_TEMPCO, INA228_SHUNT_TEMPCO_VALUE)
-
-    
+ 
     def configure(self):
-
         self.reset_all()
-
         self.set_config()
         # self.set_adc_config()
-
         self.shunt_calib()
         self.shunt_tempco()
-
         time.sleep(0.1)
-
-    
+ 
     def get_shunt_voltage(self):
-
         if(INA228_ADCRANGE == 1):
             conversion_factor = 312.5e-9                # nV/LSB
         else:
             conversion_factor = 78.125e-9               # nV/LSB  
 
         raw = self.read_register24(self.__INA228_VSHUNT)
-
         vshunt = (self.__convert2comp2float(raw >> 4, 20, conversion_factor)) * 10                  # Find and fix *10
-
         print('Shunt voltage: ', vshunt)
 
-
     def get_vbus_voltage(self):
-        
         conversion_factor = 195.3125e-6                 # uV/LSB
-
         raw = self.read_register24(self.__INA228_VBUS)
-
         vbus = self.__convert2comp2float(raw >> 4, 20, conversion_factor)
-
         print('VBUS voltage: ', vbus)
 
-
-
     def get_temp_voltage(self):
-
         conversion_factor = 7.8125e-3
-
         raw = self.read_register16(self.__INA228_DIETEMP)
-
         temp = self.__convert2comp2float(raw, 16, conversion_factor)
-
         print('Die temp: ', temp)
 
-
-    
     def get_current(self):        
-
         raw = self.read_register24(self.__INA228_CURRENT)
-
         current = self.__convert2comp2float(raw >> 4, 20, self.get_current_lsb())
-
         print('Current: ', current)
 
-
-
     def get_power(self):
-
         current_lsb = self.get_current_lsb() 
-
         raw = self.read_register24(self.__INA228_POWER)
-
         power = (3.2 * raw * current_lsb)       
-
         print('Power: ', power)
 
-
-
     def get_energy(self):
-
         raw = self.read_register40(self.__INA228_ENERGY)
-
         energy = raw * 3.2 * 16 * self.get_current_lsb()
-
         print('Energy: ', energy)
 
-    
     def get_charge(self):
-
         raw = self.read_register40(self.__INA228_CHARGE)
-
         print('Charge: ', raw)
 
-    
     def get_diag_alerts(self, alert):
-
         raw = self.read_register16(self.__INA228_DIAG_ALRT)
 
         if(alert == INA228_ALERT_ALATCH):
@@ -517,97 +416,82 @@ class INA228:
             else:
                 print('ALATCH: Transparent')
 
-
     def set_shunt_overvoltage(self, value):
-
         if (value >= 0):
-
             data = (value * self._shunt_ohms) / self.get_shunt_conv_factor()
 
         else:
-
             value_temp = value * (-1);
-
             data = (value_temp * self._shunt_ohms) / self.get_shunt_conv_factor()
             data = ~data
             data = data + 1
 
         self.read_register16(self.__INA228_SOVL)
-
         self.write_register16(self.__INA228_SOVL, data)
-
         
     def set_shunt_undervoltage(self, value):
-
         if (value >= 0):
-
             data = (value * self._shunt_ohms) / self.get_shunt_conv_factor()
 
         else:
-
             value_temp = value * (-1);
-
             data = (value_temp * self._shunt_ohms) / self.get_shunt_conv_factor()
             data = ~data
             data = data + 1
 
         self.read_register16(self.__INA228_SUVL)
-
         self.write_register16(self.__INA228_SUVL, data)
 
-    
     def set_bus_overvoltage(self, value):
-
         data = value / (16 * 195.3125e-6)
-
         self.read_register16(self.__INA228_BOVL)
-
         self.write_register16(self.__INA228_BOVL, data)
 
-
     def set_bus_undervoltage(self, value):
-
         data = value / (16 * 195.3125e-6)
-
         self.read_register16(self.__INA228_BUVL)
-
         self.write_register16(self.__INA228_BUVL, data)
 
-
     def set_temp_limit(self, value, consta):
-
         data = value / (16 * consta)
-
         self.read_register16(self.__INA228_TEMP_LIMIT)
-
         self.write_register16(self.__INA228_TEMP_LIMIT, data)
 
-    
     def set_power_overlimit(self, value, consta):
-
         data = value / (16 * consta)
-
         self.read_register16(self.__INA228_PWR_LIMIT)
-
         self.write_register16(self.__INA228_PWR_LIMIT, data)
 
-
     def get_manufacturer_id(self):
-
         raw_id = self.read_register16(self.__INA228_MANUFACTURER_ID)
-
         print('Manufacturer ID (HEX): ', hex(raw_id))
 
         first_byte = (raw_id >> 8) & 0xFF
         second_byte = (raw_id & 0xFF)
-
         print('Manufacturer ID (CHAR): ', chr(first_byte),chr(second_byte))
-
     
     def get_deviceid(self):
-
         raw_id = self.read_register16(self.__INA228_DEVICE_ID)
 
         print('Device ID: ', hex(raw_id >> 4))
         print('Revision: ',  hex(raw_id & 0xF))
 
+
+if 0:
+    import time
+    ina228 = INA228(busnum=0, address = 0x40, shunt_ohms = 0.015)
+    ina228.configure()
+
+    i = 0
+
+    while True:    
+        ina228.get_vbus_voltage()
+        ina228.get_current()
+        ina228.get_power()
+
+        if i < 0:
+            i = i +1
+            print(i, time.ticks_ms())
+
+        else:
+            break
